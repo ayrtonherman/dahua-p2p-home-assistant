@@ -1,5 +1,5 @@
 name: Dahua P2P Bridge
-version: "0.3.3"
+version: "0.3.4"
 slug: dahua_p2p_bridge
 description: Dahua DMSS P2P RTSP tunnel for Home Assistant
 url: https://github.com/ayrtonherman/dahua-p2p-home-assistant
