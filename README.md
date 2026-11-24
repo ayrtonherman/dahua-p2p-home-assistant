@@ -6,15 +6,22 @@ A Home Assistant OS add-on that forwards a Dahua camera's RTSP port through the 
 
 Initial target: Dahua DH-IPC-HDW2441TM-S.
 
-The add-on wraps the community project [undervolter/dh-fwd](https://github.com/undervolter/dh-fwd), pinned to a reviewed commit. This is an unofficial, reverse-engineered protocol implementation. Compatibility depends on the camera firmware and the cloud connection mode. This add-on implements Dahua P2P, not the separate DMSS account-mode PaaS streaming service. Dahua documents P2P for DMSS local (non-account) mode and PaaS for DMSS account mode; a camera available only through an account-shared DMSS entry may therefore remain unsupported by this bridge.
+The add-on wraps the community project [undervolter/dh-fwd](https://github.com/undervolter/dh-fwd), pinned to a reviewed commit, with a small compatibility patch for Dahua firmware that returns HTTP 404 / no Info blob from `/info/device/<SN>`. The documented legacy no-salt Type-1 path derives the channel key using an empty salt and omits the `<RandSalt>` XML element. The add-on now uses the DMSS profile and Type-1 channel authentication with the camera's local username and password.
+
+This is unofficial, reverse-engineered interoperability software. The patch is based on the documented no-salt protocol behavior; the exact target camera handshake still requires live verification.
 
 ## Install
 
-1. In Home Assistant, open **Settings → Apps → App store → ⋮ → Repositories**.
+1. In the parents' Home Assistant, open **Settings → Apps → App store → ⋮ → Repositories**.
 2. Add: https://github.com/ayrtonherman/dahua-p2p-home-assistant
-3. Install **Dahua P2P Bridge**.
-4. Enter the camera serial number in the add-on configuration.
-5. Leave **Force relay** disabled initially. Start the add-on and check its log.
+3. Refresh the repository and install/update **Dahua P2P Bridge** to **0.3.2**.
+4. Configure:
+   - **Serial:** camera serial number
+   - **Username:** local camera username (not the DMSS account email)
+   - **Password:** local camera password
+   - **Force relay:** off for the first test
+   - **Verbose:** on
+5. Start the add-on and inspect its log.
 
 The bridge listens on TCP port 8554 and forwards it to the camera's RTSP port 554.
 
@@ -28,19 +35,18 @@ rtsp://CAMERA_USERNAME:CAMERA_PASSWORD@HOME_ASSISTANT_IP:8554/cam/realmonitor?ch
 
 Replace the placeholders locally. Do not publish the serial number, camera credentials, or complete RTSP URL. The example uses the substream (`subtype=1`); use `subtype=0` for the main stream.
 
-**Important:** the camera username and password belong in the Home Assistant RTSP stream configuration. The DMSS P2P channel handshake used by this bridge does not use those credentials. The previous Type-1 channel-auth setting required a RandSalt Info blob that was absent in the camera's diagnostic response, so this add-on now uses the DMSS profile's Type-0 channel mode.
-
 ## Force relay
 
-If the normal P2P connection cannot establish its direct UDP path, enable **Force relay** in the add-on options and restart it. Relay availability is controlled by Dahua's cloud service and camera firmware.
+If the normal DMSS P2P connection cannot establish its direct UDP path, enable **Force relay** in the add-on options and restart it. Relay availability is controlled by Dahua's cloud service and camera firmware.
 
 ## Security and limitations
 
 - Keep TCP port 8554 on the trusted Home Assistant network. Do not forward it to the public internet.
+- The camera's local username/password are used for both authenticated P2P channel setup and RTSP.
 - Anyone who can reach the forwarded RTSP port may be able to attempt camera authentication; use a strong camera password and firewall the port.
 - The camera may allow only one active P2P relay session. While the bridge is connected, DMSS or another P2P client may temporarily be unable to use the same session.
 - This add-on supports one camera per installation.
-- This is not an official Dahua or Home Assistant integration and is not guaranteed to work with every firmware or DMSS account configuration.
+- No live end-to-end test has yet confirmed compatibility with every firmware revision.
 
 ## Upstream
 
