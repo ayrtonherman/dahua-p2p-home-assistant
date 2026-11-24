@@ -18,24 +18,21 @@ if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
   exit 1
 fi
 
-# Compatibility with options saved by add-on 0.3.2.
 if [ "$LEGACY_DIAGNOSTIC" = "true" ]; then
   bashio::log.warning "The old diagnostic option is ignored; starting the RTSP tunnel."
   VERBOSE="true"
 fi
 if [ "$LEGACY_FORCE_RELAY" = "true" ]; then
-  bashio::log.warning "The old force_relay option is no longer used; the DMSS app-relay protocol is selected automatically."
+  bashio::log.warning "The old force_relay option is retained for compatibility; DMSS app-relay is selected automatically."
 fi
 
-# DMSS account-bound devices require the DMSS cloud profile. Modern Dahua
-# devices use the app-relay handshake; upstream handles retries internally.
-ARGS=(--app dmss --app-relay --type 1 --username "$USERNAME" --password "$PASSWORD" --port 8554:554 "$SERIAL")
+ARGS=(--yes --app dmss --app-relay --type 1 --username "$USERNAME" --password "$PASSWORD" --port 8554:554 "$SERIAL")
 
 if [ "$VERBOSE" = "true" ]; then
   ARGS+=(--debug --log-retries)
 fi
 
 bashio::log.info "Starting dh-fwd v2.4.1 DMSS tunnel on container TCP port 8554."
-bashio::log.info "Using the DMSS cloud profile and modern app-relay handshake."
+bashio::log.info "Trying the documented empty-RandSalt Type-1 fallback when device Info is unavailable."
 
 exec /usr/local/bin/dh-fwd "${ARGS[@]}"
