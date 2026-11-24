@@ -14,7 +14,7 @@ COPY patch_dh_fwd.py /tmp/patch_dh_fwd.py
 RUN python3 /tmp/patch_dh_fwd.py
 # The upstream binary binds forwarded ports to loopback. The add-on port
 # mapping cannot reach that listener, so bind inside the container instead.
-RUN sed -i 's/127\\.0\\.0\\.1:%d/0.0.0.0:%d/' core/tunnel.go \
+RUN sed -i 's/127\.0\.0\.1:%d/0.0.0.0:%d/' core/tunnel.go \
     && grep -q '0.0.0.0:%d' core/tunnel.go
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/dh-fwd .
 
