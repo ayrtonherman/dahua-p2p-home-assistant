@@ -2,17 +2,19 @@
 set -e
 
 SERIAL="$(bashio::config 'serial')"
+USERNAME="$(bashio::config 'username')"
+PASSWORD="$(bashio::config 'password')"
 VERBOSE="$(bashio::config 'verbose')"
 
-if [ -z "$SERIAL" ]; then
-  bashio::log.fatal "A Dahua device serial number is required in the add-on configuration."
+if [ -z "$SERIAL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+  bashio::log.fatal "Serial number, camera username and camera password are required."
   exit 1
 fi
 
-ARGS=(tunnel "$SERIAL" --listen 8554 --remote 554 --host 0.0.0.0)
+ARGS=(--app dmss --type 1 --username "$USERNAME" --password "$PASSWORD" --port 8554:554 --reconnect --yes "$SERIAL")
 if [ "$VERBOSE" = "true" ]; then
-  ARGS+=(--verbose)
+  ARGS+=(--debug)
 fi
 
-bashio::log.info "Starting Dahua Easy4ip P2P tunnel on TCP port 8554."
-exec dahua-p2p "${ARGS[@]}"
+bashio::log.info "Starting authenticated Dahua DMSS P2P tunnel; local RTSP port 8554."
+exec /usr/local/bin/dh-fwd "${ARGS[@]}"
