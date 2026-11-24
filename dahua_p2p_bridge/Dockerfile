@@ -1,20 +1,15 @@
 ARG BUILD_FROM
 FROM golang:1.25-alpine AS build
-RUN apk add --no-cache git python3
+RUN apk add --no-cache git
 WORKDIR /src
-# Pin the reviewed DMSS-capable dh-fwd revision.
+# Pin the reviewed DMSS-capable upstream release.
 RUN git init . \
     && git remote add origin https://github.com/undervolter/dh-fwd.git \
-    && git fetch --depth 1 origin c26ce4f4b7051bfd0b8d07d8a22400f52cb5142c \
+    && git fetch --depth 1 origin a8b2ab9c850be3bd673513c43f30b1a2499d5e47 \
     && git checkout --detach FETCH_HEAD
-# The device returns HTTP 404 for /info/device and has no RandSalt.
-# The documented legacy path uses Type-1 auth with an empty salt and omits
-# the RandSalt XML element; upstream currently fails closed before trying it.
-COPY patch_dh_fwd.py /tmp/patch_dh_fwd.py
-RUN python3 /tmp/patch_dh_fwd.py
-# The upstream binary binds forwarded ports to loopback. The add-on port
-# mapping cannot reach that listener, so bind inside the container instead.
-RUN sed -i 's/127\.0\.0\.1:%d/0.0.0.0:%d/' core/tunnel.go \
+# Home Assistant publishes the container port, so bind the forwarded RTSP
+# listener on all container interfaces instead of upstream's loopback only.
+RUN sed -i 's/127\\.0\\.0\\.1:%d/0.0.0.0:%d/' core/tunnel.go \
     && grep -q '0.0.0.0:%d' core/tunnel.go
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/dh-fwd .
 
