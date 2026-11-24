@@ -1,0 +1,21 @@
+name: Dahua P2P Bridge
+version: "0.1.0"
+slug: dahua_p2p_bridge
+description: Exposes a Dahua camera RTSP port through the Easy4ip P2P relay
+url: https://github.com/ayrtonherman/dahua-p2p-home-assistant
+arch:
+  - amd64
+  - aarch64
+startup: services
+boot: manual
+init: false
+ports:
+  8554/tcp: 8554
+ports_description:
+  8554/tcp: Local RTSP tunnel endpoint
+options:
+  serial: ""
+  verbose: false
+schema:
+  serial: str
+  verbose: bool
