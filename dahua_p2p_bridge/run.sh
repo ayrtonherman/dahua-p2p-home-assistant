@@ -4,9 +4,9 @@ set -e
 SERIAL="$(bashio::config 'serial')"
 USERNAME="$(bashio::config 'username')"
 PASSWORD="$(bashio::config 'password')"
-FORCE_RELAY="$(bashio::config 'force_relay')"
 VERBOSE="$(bashio::config 'verbose')"
 LEGACY_DIAGNOSTIC="$(bashio::config 'diagnostic')"
+LEGACY_FORCE_RELAY="$(bashio::config 'force_relay')"
 
 if [ -z "$SERIAL" ]; then
   bashio::log.fatal "Camera serial number is required."
@@ -18,28 +18,24 @@ if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
   exit 1
 fi
 
-# Keep compatibility with existing saved options from version 0.2.x.
+# Compatibility with options saved by add-on 0.3.2.
 if [ "$LEGACY_DIAGNOSTIC" = "true" ]; then
-  bashio::log.warning "The old diagnostic-only setting is ignored; starting the RTSP tunnel."
+  bashio::log.warning "The old diagnostic option is ignored; starting the RTSP tunnel."
   VERBOSE="true"
 fi
-
-# This camera returns 404 for /info/device/<SN>. The build patch implements
-# Dahua's documented no-RandSalt Type-1 auth path for this firmware.
-ARGS=(--app dmss --type 1 --username "$USERNAME" --password "$PASSWORD" --port 8554:554 --reconnect "$SERIAL")
-
-if [ "$FORCE_RELAY" = "true" ]; then
-  ARGS+=(--relay)
+if [ "$LEGACY_FORCE_RELAY" = "true" ]; then
+  bashio::log.warning "The old force_relay option is no longer used; the DMSS app-relay protocol is selected automatically."
 fi
+
+# DMSS account-bound devices require the DMSS cloud profile. Modern Dahua
+# devices use the app-relay handshake; upstream handles retries internally.
+ARGS=(--app dmss --app-relay --type 1 --username "$USERNAME" --password "$PASSWORD" --port 8554:554 "$SERIAL")
 
 if [ "$VERBOSE" = "true" ]; then
   ARGS+=(--debug --log-retries)
 fi
 
-bashio::log.info "Starting authenticated Dahua DMSS P2P tunnel on local TCP port 8554."
-bashio::log.info "Camera credentials are used for P2P channel authentication and RTSP."
-if [ "$FORCE_RELAY" = "true" ]; then
-  bashio::log.info "Forced relay mode is enabled."
-fi
+bashio::log.info "Starting dh-fwd v2.4.1 DMSS tunnel on container TCP port 8554."
+bashio::log.info "Using the DMSS cloud profile and modern app-relay handshake."
 
 exec /usr/local/bin/dh-fwd "${ARGS[@]}"
