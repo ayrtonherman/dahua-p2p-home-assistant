@@ -1,7 +1,7 @@
 name: Dahua P2P Bridge
-version: "0.1.0"
+version: "0.2.0"
 slug: dahua_p2p_bridge
-description: Exposes a Dahua camera RTSP port through the Easy4ip P2P relay
+description: Experimental authenticated Dahua DMSS P2P tunnel for Home Assistant
 url: https://github.com/ayrtonherman/dahua-p2p-home-assistant
 arch:
   - amd64
@@ -12,10 +12,14 @@ init: false
 ports:
   8554/tcp: 8554
 ports_description:
-  8554/tcp: Local RTSP tunnel endpoint
+  8554/tcp: RTSP tunnel to the camera
 options:
   serial: ""
+  username: ""
+  password: ""
   verbose: false
 schema:
   serial: str
+  username: str
+  password: password
   verbose: bool
