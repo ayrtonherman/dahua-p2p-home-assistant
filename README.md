@@ -6,7 +6,7 @@ A Home Assistant OS add-on that forwards a Dahua camera's RTSP port through the 
 
 Initial target: Dahua DH-IPC-HDW2441TM-S.
 
-The add-on wraps the community project [undervolter/dh-fwd](https://github.com/undervolter/dh-fwd), pinned to a reviewed commit. This is an unofficial, reverse-engineered protocol implementation. Compatibility depends on the camera firmware and the cloud connection mode.
+The add-on wraps the community project [undervolter/dh-fwd](https://github.com/undervolter/dh-fwd), pinned to a reviewed commit. This is an unofficial, reverse-engineered protocol implementation. Compatibility depends on the camera firmware and the cloud connection mode. This add-on implements Dahua P2P, not the separate DMSS account-mode PaaS streaming service. Dahua documents P2P for DMSS local (non-account) mode and PaaS for DMSS account mode; a camera available only through an account-shared DMSS entry may therefore remain unsupported by this bridge.
 
 ## Install
 
