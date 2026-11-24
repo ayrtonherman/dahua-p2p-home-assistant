@@ -1,47 +1,48 @@
-# Dahua P2P bridge for Home Assistant OS
+# Dahua DMSS P2P bridge for Home Assistant OS
 
-A Home Assistant OS add-on wrapper around the community project [ludufre/dahua-p2p](https://github.com/ludufre/dahua-p2p). It attempts to expose a Dahua camera's RTSP service through the Easy4ip cloud relay, so Home Assistant can consume the stream without inbound port forwarding or a site-to-site VPN.
+A Home Assistant OS add-on that forwards a Dahua camera's RTSP port through the Dahua DMSS P2P cloud protocol. It is intended for a camera at another internet connection, without inbound port forwarding, a VPN, or a phone relay.
 
-## Status
+## Target device
 
-**Experimental; not yet tested with this camera or this Home Assistant installation.** The upstream project is an unofficial reverse-engineered implementation intended for personal and research use. Compatibility with every Dahua model and firmware is not guaranteed.
+Initial target: Dahua DH-IPC-HDW2441TM-S.
 
-The first target is one camera: Dahua DH-IPC-HDW2441TM-S. Do not publish the camera serial number, username, password, or stream URL in this repository.
+The add-on wraps the community project [undervolter/dh-fwd](https://github.com/undervolter/dh-fwd), pinned to a reviewed commit. This is an unofficial, reverse-engineered protocol implementation. Compatibility depends on the camera firmware and the cloud connection mode.
 
-## Installation
+## Install
 
 1. In Home Assistant, open **Settings → Apps → App store → ⋮ → Repositories**.
-2. Add this repository URL: https://github.com/ayrtonherman/dahua-p2p-home-assistant
+2. Add: https://github.com/ayrtonherman/dahua-p2p-home-assistant
 3. Install **Dahua P2P Bridge**.
-4. In the add-on configuration, enter the camera's P2P serial number. Do not put credentials in GitHub.
-5. Start the add-on and inspect its log.
+4. Enter the camera serial number in the add-on configuration.
+5. Leave **Force relay** disabled initially. Start the add-on and check its log.
 
-The add-on listens on TCP port 8554 and forwards that connection through the Dahua P2P tunnel to the camera's RTSP port 554.
+The bridge listens on TCP port 8554 and forwards it to the camera's RTSP port 554.
 
-## Home Assistant camera stream
+## Add the camera to Home Assistant
 
-Once the bridge is running, a local RTSP client on the Home Assistant network can connect to:
+Use the Generic Camera integration (or another RTSP-capable camera integration) with this stream source:
 
 ```text
 rtsp://CAMERA_USERNAME:CAMERA_PASSWORD@HOME_ASSISTANT_IP:8554/cam/realmonitor?channel=1&subtype=1
 ```
 
-Use the camera's own local device credentials in the RTSP URL. Keep that URL private. The example uses the substream (subtype 1); subtype 0 is usually the main stream.
+Replace the placeholders locally. Do not publish the serial number, camera credentials, or complete RTSP URL. The example uses the substream (`subtype=1`); use `subtype=0` for the main stream.
 
-## Important limitations
+**Important:** the camera username and password belong in the Home Assistant RTSP stream configuration. The DMSS P2P channel handshake used by this bridge does not use those credentials. The previous Type-1 channel-auth setting required a RandSalt Info blob that was absent in the camera's diagnostic response, so this add-on now uses the DMSS profile's Type-0 channel mode.
 
-- This is an experimental wrapper, not an official Dahua or Home Assistant integration.
-- The upstream P2P project documents one relay session per camera at a time. While the bridge holds the tunnel, DMSS or another P2P client may be unable to use that camera's relay session.
-- The upstream project documents relay authentication and firmware-related limitations. Some devices may reject the P2P channel.
-- The add-on currently supports one camera instance per add-on installation.
-- Only amd64 and aarch64 builds are configured at present.
-- Do not expose TCP port 8554 to the public internet. Keep it on the trusted home network.
+## Force relay
+
+If the normal P2P connection cannot establish its direct UDP path, enable **Force relay** in the add-on options and restart it. Relay availability is controlled by Dahua's cloud service and camera firmware.
+
+## Security and limitations
+
+- Keep TCP port 8554 on the trusted Home Assistant network. Do not forward it to the public internet.
+- Anyone who can reach the forwarded RTSP port may be able to attempt camera authentication; use a strong camera password and firewall the port.
+- The camera may allow only one active P2P relay session. While the bridge is connected, DMSS or another P2P client may temporarily be unable to use the same session.
+- This add-on supports one camera per installation.
+- This is not an official Dahua or Home Assistant integration and is not guaranteed to work with every firmware or DMSS account configuration.
 
 ## Upstream
 
-- https://github.com/ludufre/dahua-p2p
-- Upstream CLI: `dahua-p2p tunnel <SERIAL> --listen 8554 --remote 554 --host 0.0.0.0`
-
-## License and attribution
-
-This wrapper is separate from the upstream project. The upstream `dahua-p2p` package is MIT-licensed; see its repository for its license and notices. The upstream maintainer describes their project as personal/research use and not affiliated with Dahua or Intelbras.
+- https://github.com/undervolter/dh-fwd
+- MIT license; see the upstream repository for license and attribution.
