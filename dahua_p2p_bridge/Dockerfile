@@ -9,7 +9,7 @@ RUN git init . \
     && git checkout --detach FETCH_HEAD
 # Home Assistant publishes the container port, so bind the forwarded RTSP
 # listener on all container interfaces instead of upstream's loopback only.
-RUN sed -i 's/127\\.0\\.0\\.1:%d/0.0.0.0:%d/' core/tunnel.go \
+RUN sed -i 's/127[.]0[.]0[.]1:%d/0.0.0.0:%d/' core/tunnel.go \
     && grep -q '0.0.0.0:%d' core/tunnel.go
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/dh-fwd .
 
